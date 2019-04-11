@@ -1,0 +1,152 @@
+***********************************************
+http://www.cnblogs.com/vamei/p/3708605.html
+***********************************************
+
+  把字符串通过ok()返回给客户。我可以把一个完整的html页面放入字符串中返回。
+  然而，现代的框架都提供了更好的方法——模板。
+  模板将视图和数据分开。服务器可以把不同的数据传递给同一个模板，从而产生不同的页面。
+  Play同样也有一套模板系统。模板的大部分内容都可以用html写，
+  作为视图，而在一些特别的地方，预留给数据参数。在模板中，用Scala语言来调用参数。
+  
+  /*
+  
+      使用模板
+            我首先创建一个模板，纯粹起视图功能。
+            在app/views文件夹中，新建文件index.scala.html 
+            （如果已有，则删除并重新创建）。
+    **************************
+    <!DOCTYPE html>
+    <html>
+      <header>
+        <title>Play</title>
+      </header>
+
+      <body>
+        <p>Hello World! Start using the Template.</p>
+      </body>
+    </html>
+    ***************************
+  
+  
+  	修改app/controllers/Application.java：
+	
+	***************************
+	package controllers;
+
+	import play.*;
+	import play.mvc.*;
+	public class Application extends Controller {
+		public static Result index() {
+			return ok(views.html.index.render());
+		}
+	}
+	***************************
+  	ok()中接收的是views.html.index.render()，
+	实际上就是app/views/index.scala.html这一模板的render()方法。
+	Play会根据模板，自动生成相应的类。
+	也可以用import引入views.html.index，而不是使用完整的类路径。
+	
+	
+  */
+  
+  
+  **********************************************
+  模板语言
+  这一部分，我把对象作为参数传给模板，然后在模板中显示对象中包含的数据。
+  修改index.scala.html：
+  /*
+  	@(title: String, content: String)
+
+	<!DOCTYPE html>
+	<html>
+	  <header>
+		<title>@title</title>
+	  </header>
+
+	  <body>
+		<p>@(content) Start using the template.</p>
+	  </body>
+	</html>
+  
+	  上面的第一行，以@符号开头，说明了该模板所接收的两个参数，
+	  即String类型的title和content。
+	  在模板中，用@符号和参数名，来调用参数。
+	  参数名周围可以用括号"()"，以区分正文。
+  修改动作：
+  		------------------------
+		
+		public static Result index() {
+			return ok(views.html.index.render("Play", "Hello World! Parameters passed. "));
+		}
+		------------------------
+		
+		上面把一个对象传递给模板。我们还可以在模板中调用对象的属性或方法：
+
+		@object.method()
+
+		@object.field
+  */
+  
+  **********************************************
+  
+  ###############################################
+  模板控制：
+  		我还可以用Scala的语法，在模板中实现更复杂的逻辑。比如下面的模板中使用
+		/*
+		@(title: String, content: String, lines: List[String])
+
+		<!DOCTYPE html>
+		<html>
+		  <header>
+			<title>@title</title>
+		  </header>
+
+		  <body>
+			<p>@(content) Start using the template.</p>
+			<ul>
+			@for(line <- lines) {
+			  <li>@line</li>
+			}
+			</ul>
+		  </body>
+		</html>
+		
+		修改动作，把一个字符串类型的表作为参数传递给模板：
+		
+		-------------------------------------------
+		package controllers;
+
+		import play.*;
+		import play.mvc.*;
+
+		import java.util.List;
+		import java.util.ArrayList;
+
+		public class Application extends Controller {
+			public static Result index() {
+				List<String> lines = new ArrayList<String>();
+				lines.add("a");
+				lines.add("b");
+				lines.add("c");
+				return ok(views.html.index.render("Play", "Hello World!", lines));
+			}
+		}
+		-------------------------------------------
+		*/
+		
+		模板中还可以有if选择结构，比如
+
+		@if(item) {
+		  <p>True</p>
+		} else {
+		  <p>False</p>
+		}
+
+		根据参数item的真假，if结构显示不同的内容。
+		
+		其它
+
+		在@* *@中加入注释
+
+		由于@的特殊功能，为了在模板中显示"@"字符，需要使用@@。
+  ##############################################
