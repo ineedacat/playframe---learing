@@ -1,0 +1,70 @@
+   **************************************************************************
+   http://www.cnblogs.com/vamei/p/3704839.html
+   **************************************************************************
+
+理解响应：这一
+        一个请求进入服务器后，有URL路由引导到正确的动作来处理。URL路由根据请求的方法
+    和URL来识别这一请求，再寻找对应动作。
+   
+   URL路由是一个文件，即项目根目录下的conf/routes.文件的每一行是一条记录，规定了
+   某个URL的对应动作
+   
+   # Home page
+   GET /   controllers.Application.index()
+   
+   #   ->  注释
+   
+   记录分为三个部分。第一部分为请求的方法，第二个部分为请求的URL，第三个是请求的对应动作。
+   这里Application是一个控制器，位于app/controllers/Application.java中。
+   一个控制器也是一个Java类。而动作index()是类的一个方法
+   
+   我对默认生成的Application.java略作修改。新的app/controllers/Application.java为：
+   
+   **************************************************************************
+   package controllers;
+
+    import play.*;
+    import play.mvc.*;
+
+    import views.html.*;
+
+    public class Application extends Controller {
+
+        public static Result index() {
+            return ok("Hello World!");
+        }
+
+    }
+    *************************************************************************
+    
+    可以注意到，作为控制器的Application，需要继承自Controller类。
+
+    一个动作必须是一个静态(static)的方法。一个动作返回一个Result类型的对象。
+    ok("Hello World!")
+    返回的就是这么一个Result对象，代表了一个HTTP响应。
+    ok()返回的响应都是200状态，即ok（正常回复）。
+    在这个例子中，响应的主体内容为"Hello World!"。
+    
+    你可以启动Play服务器，访问上面的URL(localhost:9000/)。
+    使用Chrome的network工具监视回复。页面如下：
+    根据network工具的监视，响应的状态码为200。
+    响应的类型为text/plain。
+    这是ok()生成Result对象时自动决定的。
+    我可以手动控制响应类型，比如将index()的返回语句改为：
+    
+    return ok("Hello World!").as("text/html");
+    
+    这样，响应的主体类型为html。
+    
+    ************************************************************************
+    其他状态的响应
+    ************************************************************************
+    
+    return badRequest("bad request"); // 400, 坏请求
+    return unauthorized("You are forbidden"); // 401, 未授权
+    return redirect("/new");    // 303, 重新定向
+
+    ###################################
+    更多的响应生成方式
+    http://www.playframework.com/documentation/2.2.1/api/java/play/mvc/Results.html
+    ###################################
