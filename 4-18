@@ -1,0 +1,564 @@
+/*
+
+    https://blog.csdn.net/bristy_pu/article/details/8075704
+
+*/
+
+
+Play framework
+ 
+Play简介
+ 
+    Play框架架构于标准的Java体系之上，小巧精致，简洁轻便。却包含了从Web框架到对象持
+ 
+久、从动态编译到单元测试、从缓存到异步作业框架、从插件到模块扩展体系等众多功能，是一
+ 
+个全栈框架，它吸收并重用了大量已有Java类库，却依然能够独树一帜、标新立异。
+ 
+八大美学特征：
+    1、没有了“编译-打包-部署”，直接“修改-保存-刷新”；
+ 
+    2、非常详细的编译错误提示
+ 
+    3、简单的无状态MVC架构
+ 
+    4、HTTP直接映射到代码调用
+ 
+    5、高效的模板引擎
+ 
+    6、强化的JPA
+ 
+    7、测试驱动开发
+ 
+    8、全栈式应用框架
+八大暴力特征：
+ 
+    1、自带嵌入式的Java编译器，不再需要构建工具编译、打包代码；
+ 
+    2、自带嵌入式的HTTP服务器，不再需要打包部署到Servlet容器；
+ 
+    3、自带在嵌入式服务器中运行的测试框架，所有的测试类，必须以测试模式启动服务器方式执行
+ 
+    4、严格按MVC组织应用代码，各层组件类必须继承基类，没有“优雅”的接口实现，也不用依赖注入；
+ 
+    5、对渲染响应结果的跳转控制，居然使用“异常”抛出机制 ；
+ 
+    6、控制器类的Action方法通通是静态的，直接调用静态方法即为Action链重定向；
+ 
+    7、将模型类的字段声明为public，再通过框架编译成私有字段和公共属性访问方法，访问模型对象的属性时也不使用get/set；
+ 
+    8、打破Java的封闭类定义，可以为Java类库中的类定义增强方法，并在响应模板中嵌入的
+增强对象上调用。
+ 
+主要概念
+ 
+MVC设计模式
+    Play框架采用了良好的MVC设计模式，这个模式把应用分为三层：模型层（Model），控制层（Controller）和表示层（View）。
+ 
+    关于MVC设计模式的具体思想可以参考其他资料，本资料主要讲解Play的知识，在这里不再叙述。
+ 
+    play应用针对MVC三层结构在app目录下分别定义了三个目录。
+app/controllers
+ 
+    一个Play控制器（Controller）就是一个Java类，在Controller里定义的每一个public,static,void方法就是action。Action获取HTTP请求数据，查询或者更新模型对象，并返回结果。
+app/models
+ 
+    模式层是一个个Java实体类的集合，模型包含数据结构和操作，可以采用JPA或者是DAO模式对模型进行持久化。
+app/views
+ 
+    Play提供了一个高效的模板引擎来生成视图，控制层获取有用的数据后，视图层来展示，装饰这些数据。视图层通常包含HTML，XML，JSON或者其他的模板文件。
+请求生命周期
+ 
+    Play框架是一个无状态的框架，所有的HTTP请求过程如下：
+ 
+    1、Play框架接收一个HTTP请求
+ 
+    2、Router组件尝试找到最匹配的路由来接受请求，对应的action方法通过反射机制被调用
+ 
+    3、应用代码执行
+ 
+    4、渲染模板文件
+ 
+    5、Action方法返回响应结果
+    下图展示了一个完整的HTTP请求响应过程：
+ 
+标准的目录结构
+ 
+    标准化的目录结构能够让很多事情看起来非常简单，下图展示了Play项目的目录结构：
+ 
+app
+ 
+    此目录包含所有的Java源代码和视图文件。即可app目录下有一个固定的views文件夹存放所有的视图文件，也可以在此目录新建自己需要的包，例如utils。app/controllers存放所有的控制器类文件。
+ 
+注意：我的class文件在哪里呢？
+Play框架是在运行时编译Java源代码，并且把class文件和相应的二制进缓存到tmp文件夹。在tmp文件夹有bytecode和classes两个子文件夹，存放运行时编译的字节码文件和对应的二进制缓存文件。
+ 
+    此外，可在views文件夹下可以建立子文件夹，存放action对应的视图文件。例如有一个控制器app/controller/User.java，对应的视图文件夹可以推荐为app/views/User。
+public
+ 
+    Play应用程序所有的资源文件保存在此目录。这是一个公开的静态目录，可以通过服务器直接访问/public/images，/public/javascripts，/public/stylesheets默认分别用来保存图片，js文件和css样式文件。
+ 
+public目录的默认访问方式被映射成“/public”URL路径，但是你用以在conf文件中改变它的访问方式，甚至可以配置自定义目录。
+conf
+ 
+    conf这个目录用于保存Play框架的所有配置文件，有两个必须的配置文件。
+application.conf    框架的主配置文件，包含标准的配置参数
+routes    HTTP路由配置文件
+Play.configuration.get("propertyName")可以取得配置的属性。
+ 
+    application.conf用来配置框架的属性，例如服务器端口，默认日期格式，数据库连接，日志级别等。
+lib
+ 
+    这个目录存放独立的jar包，这些jar包将会自动加入到应用的classpath中。
+开发生命周期
+ 
+    Play没有编译，打包，部署这个过程，但它实现了两种截然不同的环境：DEV开发模式和PROD产品模式。
+ 
+关于DEV/PROD模式
+ 
+你可以在这两种模式这中运行程序。application.mode configuration用于配置这两种模式。开发模式时，Play检查文件变化，在必要的时候热加载，在开发模式中，可以连接Java debugger到8000端口进行调试。 
+产品模式最优于产品:所有的源码和模板文件已经被事先编译并缓存。
+开始Play
+下载
+ 
+    Play的官方网址是：http://www.playframework.org，Play官网是学习Play开发最好的地方。在官网上可以找到下载链接，这里给出1.2.4最新版本的下载地址：http://download.playframework.org/releases/play-1.2.4.zip
+ 
+    下载下来的play是一个zip包。解压缩此包，可以看到如下结构：
+NO:    文件夹 说明
+ 
+1    documentation   Play的api文档和官方教程
+ 
+2    frameword   框架的jar包，配置，测试，源码等
+ 
+3        modules 推荐的模块组件
+ 
+4        python  Play底层采用python语言
+ 
+5        resources   支持开发工具所需的资源
+ 
+6        samples-and-tests   例子程序和测试
+ 
+7        support 支持不同IDE所需要的jar
+ 
+ 
+    frameword下“play-1.2.4.jar”文件是play的主包，而frameword/lib目录下所有的jar文件是play提供的第三方jar包。
+安装与配置
+ 
+    Play无需安装，解压即可用。为了开发方便，请配置PLAY_HOME环境变量，与配置JAVE_HOME一样，如下：
+ 
+    配置path:
+ 
+    命令行中文乱码解决：
+    修改play-1.2.4\framework\pym\play下application.py文件第258行。
+ 
+ 
+基本命令
+    play new命令创建一个新的play项目。
+    play eclipsify命令使项目支持eclipse开发，此命令会在项目下生成eclipse文件夹。
+    play run命令启动服务器。
+    play stop命令停止服务器。
+    play help查看当前可使用的命令。
+    下图所示：新建一个HelloWorld项目，并使其支持eclipseIDE。
+ 
+HelloWorld
+    在eclipse导入“HelloWorld”项目。此时项目会报错，查看项目属性中Java Builder Path，新建一个用户库“play1.2.4”，加入Play的jar文件“play1.2.4.jar”和lib目录下所有的jar文件。如下图所示：
+ 
+    修改Application.java文件：
+    package controllers;
+    import play.mvc.Controller;
+    public class Application extends Controller {
+        /**
+         * action方法，此方法响应请求，并返回请求页面
+         * @param name
+         */
+        public static void sayhello(String name) {
+            String message = "Hello World!";
+            if (name != null) {
+                message += " I am " + name;
+            }
+            // 设置属性
+            renderArgs.put("message", message);
+            //返回页面
+            render("/Application/index.html");
+        }
+    }
+ 
+    可以看到，所有的控制器都位于controllers包中，并且都是继承自play.mvc.Controller类，所有的action方法都是有public static void申声的。
+    修改conf/routes文件:
+\# Routes
+\# This file defines all application routes (Higher priority routes first)
+\# Hello World page
+GET   /sayhello/?                              Application.sayhello
+    修改views/index.html文件，play的页面直接是html文件，并支持EL表达式，通过EL表达式取数据。
+    <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+    <html>
+    <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Hello World Page</title>
+    </head>
+    <body>
+    <h1>${message}</h1>
+    </body>
+    </html>
+ 
+    使用play run运行程序，此时可以看到程序以DEV模式运行，服务器已经开始监听9000端口。
+ 
+    打开浏览始，在地址栏输入：http://localhost:9000/sayhello/?name=Jock访问应用程序，name=Jock作为URL参数传入，结果如下图所示：
+ 
+    至此，HelloWorld程序已经完成。同样可以在Eclipse中右键/eclipse/Connect JPDA to HelloWorld.launch文件运行程序，此时可以在Eclipse Console观察服务器运行状态。
+Http路由
+ 
+    Play框架是如何配置请求路径并根据请求找到对应的action方法的呢？答案就是Router。通过路由组件把HTTP请求交给action方法（Controller包中通过static，public，void修饰的方法）。一个HTTP请求包含请求路径和请求方式。
+ 
+    请求路径（Request path）例如 /clients/1542, /photos/list，包含查询参数字符串。
+ 
+    请求方式（GET，POST，PUT，DELETE）
+路由配置
+ 
+    conf/routes文件用来配置请求路径，这个文件供Router组件使用。routes文件包含应用程序所有的请求路径，配置的格式：HTTP method + URL pattern + Java调用。
+ 
+    下面是一个普通的请求路径的定义：
+GET    /clients/{id}             Clients.show
+ 
+    每一个route以HTTP请求方式开始，接着是URL路径，最后是Java调用，即控制器中影响此请求的一个方法。可以使用#符号行注释。
+# Display a client
+GET    /clients/{id}             Clients.show
+HTTP请求方式
+    Play支持以下的请求方式：
+GET
+POST
+PUT
+DELETE
+HEAD
+    如果你使用*，就可以匹配所有请求方式，不管以任种方式请求，都会被接收。
+*   /clients/{id}             Clients.show          
+ 
+URI模式
+    URI模式用来定义请求路径，分静态路径和动态路径，动态路径的参数必须放在一对“{}”之间，可以用正则表达式对参数进行限定匹配。下面展示静态路径和动态路径的区别：
+/clients/all
+仅匹配如下请求：
+/clients/all
+看下面动态:
+/clients/{id}
+能够匹配
+/clients/12121
+/clients/toto
+一个路径可以配置多个动态部分
+/clients/{id}/accounts/{accountId}
+    动态路径的参数可以用正则表达式进行限定，而路径中的参数对应action方法中的参数。
+这个正则用来限定参数id只能为数字
+/clients/{<[0-9]+>id}
+ 
+这个正则限定id只能为4到10个小写字母
+/clients/{<[a-z]{4,10}>id}
+ 
+    默认的，Play认为路径最的斜杠“/”是重要的，路径最后有或者没有“/”是有区别的。
+GET     /clients         Clients.index
+将会匹配/clients但不会匹配 /clients/. 用如下的配置办法可以让框架匹配两种情况.
+GET     /clients/?       Clients.index
+Java调用
+ 
+    route最后一个部分我们称为Java调用。这部分被定义成完整的控制器类和action方法名称，这个action方法必须是公开的，静态的，无返回静的。控制器类必须定义在Controller包中，并且必须是play.mvc.Controller的子类。你可以自定义控制器的包，但在route中必须指定包名,因为默认的是controller包，所以默认不需要指定包名。
+GET    /admin             admin.Dashboard.index           
+404 action
+ 
+    可以直接使用404作用一个action，它将返回404页面。例如：
+# Ignore favicon requests
+GET     /favicon.ico            404
+指定静态参数
+ 
+    有的时候，你想重复使用一个action方法，为它配置多个请求路径route，且每个route有一个固定的参数。
+ 
+    看如下例子：
+控制器方法的代码：
+ 
+    public static void user(String id) {
+        User user = User.findById(id);
+        renderArgs.put(“user”, user);
+        render(“/application/user.html”);
+    }
+ 
+绑定的路由
+GET    /pages/{id}        Application.page
+现在，想要针对管理员配置一个专门的路径，此管理员的ID为‘king’，可以作如下配置：
+GET    /admin/?              Application.user(id:’king’)
+GET    /user/{id}/?          Application.user
+变量和脚本
+    在route文件中可以使用 ${…}提示变量，使用%{…}写脚本，和在模板文件中一样。例如：
+    %{ context = play.configuration.getProperty('context', '') }%
+ 
+    # Home page
+    GET    ${context}         Secure.login
+    GET    ${context}/        Secure.login
+ 
+路由优先级
+    当多个route配置匹配到同一个请求时，以哪一个匹配为准，这就是路由优先级。在routes文件中，越在前的，优先级越高，优先配置请求。例如：
+GET    /clients/all       Clients.listAll
+GET    /clients/{id}      Clients.show
+用如下的URL请求
+/clients/all
+虽然这两条route都能匹配这个请求，但只有第一条被用来响应
+    在实际的开发过程中，要小心配置routes，以免造成路由冲突，解决路由冲突的办法就是采用如上的配置方案，还有一种就是在参数中采用正则表达式进行匹配限定。
+静态资源路由
+    有时候需要将某些目录或者文件静态化，不通过程序直接访问，可以这样配置：
+#这样配置，public目录就可以直接访问了
+GET    /public/           staticDir:public
+# index.html将作为一个静态文件直接返回
+GET     /home                   staticFile:/public/html/index.html
+路由反转
+    既然可以通过URL找到调用action方法，自然也可以通过action生成此方法对应的URL。
+route定义如下：
+GET    /clients/{id}      Clients.show
+在代码中可以通过client.show生成URL。
+map.put("id", 1541);
+String url = Router.reverse("Clients.show", map).url;// GET /clients/1541
+ 
+ 
+控制器Controller
+Controller简介
+    控制层位于模型层和视图层之间，作控制转发用。在Play框架，一个控制器Controller就是一个Java类，它位于controllers包，继承play.mvc.Controller类。如下是一个Controller。
+    package controllers;
+ 
+    import java.util.*;
+    import play.modules.spring.Spring;
+    import dao.EmpDAO;
+ 
+    public class EmpAction extends Controller {
+ 
+        public static void empList() {
+            EmpDAO empDao = (EmpDAO) Spring.getBean("empDAO");
+            List empList = empDao.getAllEmp();
+            renderArgs.put("empList",empList);
+            render("/Emp/empList.html");
+        }
+        public static void list(int limit, int ordertype){
+            EmpDAO empDao = (EmpDAO) Spring.getBean("empDAO");
+            List empList = empDao.getEmpList(limit, ordertype);
+            renderArgs.put("empList", empList);
+            render("/Emp/ajax.html");
+        }
+    }
+ 
+    由上可以看到，你可以为action方法定义不同的参数，这些参数会通过参数名自动绑定到HTTP请求参数。renderArgs.put("empList", empList)用来设置属性，render()方法返回所请求的页面。
+接收HTTP参数
+    一个HTTP请求可能包含一些参数，这些参数有如下的形式：
+URL路径中：/client/1541,1541就可以是URI模式中的动态部分。
+查询字符串:/client/id=1541
+HTML form表单数据
+    Play将所有参数保存在Map<String, String[]>中，Key就是参数的名字。
+使用params对象获取参数
+    params是Play控制器内的一个对象，它包含当前HTTP请求的所有参数，它定义在play.mvc.Controller类中，所有子类中可以直接使用，用来取得数据。
+    public static void show() {
+        String id = params.get("id");
+        String[] names = params.getAll("names");
+    }
+    //类型转换:
+    public static void show() {
+        Long id = params.get("id", Long.class);
+    }
+ 
+ 
+Action方法获取参数
+    除了使用params对象取得参数，一个更好的方式就是把参数直接定义在action方法中，自动绑定。但是action方法的参数名必须与传递的参数名相同。
+例如有如下请求：
+/clients?id=1451
+//在action方法中声明接收参数的语法
+ 
+        public static void show(String id) {
+            System.out.println(id); 
+        }
+ 
+    //自动将参数类型进行转换，如果转换不了，会抛出异常
+ 
+        public static void show(Long id) {
+            System.out.println(id);  
+        }
+ 
+    //如果参数有多个值，如checkBox表单，可以定义成数据接收
+ 
+        public static void show(Long[] id) {
+            for(String anId : id) {
+                System.out.println(anid); 
+            }
+        }
+ 
+    //甚至可以定义集合类型接收
+    public static void show(List<Long> id) {
+        for(String anId : id) {
+            System.out.println(anId); 
+        }
+    }
+ 
+ 
+HTTP参数绑定到JavaBean
+简单类型
+    以下简单类型将会自定绑定。
+int, long, boolean, char, byte, float, double, Integer, Long, Boolean, Char, String, Byte,Float, Double.
+    对象类型如果绑定失败，默认值为null,其他基本类型为其固定默认值，如int默认为0。
+Date类型
+    一个日期类型的数据将会自动绑定，如果日期格式是如下其一：
+yyyy-MM-dd’T’hh:mm:ss’Z' // ISO8601 + timezone
+yyyy-MM-dd’T’hh:mm:ss" // ISO8601
+yyyy-MM-dd
+yyyyMMdd’T’hhmmss
+yyyyMMddhhmmss
+dd'/‘MM’/'yyyy
+dd-MM-yyyy
+ddMMyyyy
+MMddyy
+MM-dd-yy
+MM'/‘dd’/'yy
+使用@As annotation可以指定绑定的日期格式。
+archives?from=21/12/1980
+ 
+    public static void articlesSince(@As("dd/MM/yyyy") Date from) {
+        List<Article> articles = Article.findBy("date >= ?", from);
+        render(articles);
+    }
+ 
+ 
+File类型
+    在Play中，文件上传是非常容易实现的，使用multipart/form-data编码请求发送到服务器，并使用java.io.File类型对象接收。Play在tmp临时目录中保存上传的文件。
+    public static void create(String comment, File attachment) {
+        String s3Key = S3.post(attachment);
+        Document doc = new Document(comment, s3Key);
+        doc.save();
+        show(doc.id);
+    }
+ 
+集合类型
+//所有支持的类型都可以作为集合传入
+ 
+    public static void show(Long[] id) {
+        …
+    }
+    public static void show(List<Long> id) {
+        …
+    }
+    public static void show(Set<Long> id) {
+        …
+    }
+    Map<String, String> 绑定如下：
+    public static void show(Map<String, String> client) {
+        …
+    }
+ 
+请求方式：
+?client.name=John&client.phone=111-1111&client.phone=222-2222
+ 
+POJO绑定
+Play也能够自动绑定任何一个模型对象，例如：
+ 
+    public static void create(Client client ) {
+        client.save();
+        show(client);
+    }
+ 
+请求方式如下：
+?client.name=Zenexity&client.email=contact@zenexity.fr
+ 
+ 
+数据返回
+    一个action方法必须产生一个HTTP response,调用render()方法返回后，正常执行流程中断，后面的代码将不会被执行。
+    例如：
+    public static void show(Long id) {
+        Client client = Client.findById(id);
+        render(client);
+        System.out.println("This message will never be displayed !");
+    }
+    render(…)方法返回一个结果对象，停止执行。
+    当然，可以返回其他类型的数据和对象。如文本，JSON数据，xml，pdf，图片等。
+//返回文本
+ 
+    public static void countUnreadMessages() {
+        Integer unreadMessages = MessagesBox.countUnreadMessages();
+        renderText(unreadMessages);
+    }
+ 
+    //格化式文本
+    public static void countUnreadMessages() {
+        Integer unreadMessages = MessagesBox.countUnreadMessages();
+        renderText("There are %s unread messages", unreadMessages);
+    }
+    //返回JSON数据
+    public static void countUnreadMessages() {
+        Integer unreadMessages = MessagesBox.countUnreadMessages();
+        renderJSON("{\"messages\": " + unreadMessages +"}");
+    }
+    //转换对象为JSON返回
+    public static void getUnreadMessages() {
+        List<Message> unreadMessages = MessagesBox.unreadMessages();
+        renderJSON(unreadMessages);
+    }
+    //返回xml文本
+public static void countUnreadMessages() {
+        Integer unreadMessages = MessagesBox.countUnreadMessages();
+        renderXml("<unreadmessages>"+unreadMessages+"</unreadmessages>");
+    }
+    //返回Document对象
+    public static void getUnreadMessages() {
+        Document unreadMessages = MessagesBox.unreadMessagesXML();
+        renderXml(unreadMessages);
+    }
+    //返回二进制数据
+    public static void userPhoto(long id) { 
+       final User user = User.findById(id); 
+       response.setContentTypeIfNotSet(user.photo.type());
+       java.io.InputStream binaryData = user.photo.get();
+       renderBinary(binaryData);
+    } 
+ 
+拦截器机制
+    在Play中，控制器controller可以定义一些拦截器，这些拦截器方法在action方法执行之前被调用。这在验证用户是否登录，验证用户权限等功能上有很大帮助。
+    拦截器方法必须是static修饰的，但不必是public限定。且必须使用annotate去标注拦截器的有效类型。
+@Before
+    使用@Before标注的方法将在所有action方法执行之前被调用。例如一个检查用户是否登录。
+    public class Admin extends Application {
+ 
+        @Before
+        static void checkLogin() {
+            if(session.get("user") == null) login();
+        }
+ 
+        public static void index() {
+            List<User> users = User.findAll();
+            render(users);
+        }
+ 
+        ...
+ 
+    }
+    在控制器Admin所有action方法执行之前，都会先执行checkLogin()方法，检查用户是否已经登录。并且，所有Admin子类也会继承这个拦截器，这意味着所有子类action方法执行之前，此拦截方法也将被优先执行。同时你可以定义多个拦截器方法，用于实现不同的功能。
+    如果你不想拦截控制器中某些方法，或者说只想拦截其中某些方法，而不是拦截全部方法，要怎么做？请看下面代码：
+    public class Admin extends Application {
+        //只拦截login和logout方法，其他方法不拦截
+        @Before(only={"login","logout"})
+        static void doSomething() {  
+            ...  
+        }
+ 
+        //不拦截index方法,其他都拦截
+        @Before(unless="index")
+        static void doSomething2() {  
+            ...  
+        }
+ 
+        public static void index() {
+            List<User> users = User.findAll();
+            render(users);
+        } 
+    }
+ 
+ 
+@After
+@Finally
+@With
+四种属性范围
+九个内置对象
+模板引擎
+数据验证
+异步
+缓存
+多模块
+Spring整合
+发送邮件
